@@ -1572,6 +1572,7 @@ class RTCSession extends EventManager implements Owner {
         });
       } else if (state ==
           RTCIceConnectionState.RTCIceConnectionStateDisconnected) {
+        _iceGatheringState = RTCIceGatheringState.RTCIceGatheringStateNew;
         _iceRestart();
       }
     };
