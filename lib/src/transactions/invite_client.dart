@@ -45,9 +45,7 @@ class InviteClientTransaction extends TransactionBase {
       timer_B();
     }, Timers.TIMER_B);
 
-    if (!transport!.send(request)) {
-      onTransportError();
-    }
+    safeSend(0);
   }
 
   @override

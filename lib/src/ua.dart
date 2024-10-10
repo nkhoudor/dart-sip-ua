@@ -925,10 +925,11 @@ class UA extends EventManager {
 
 // Transport disconnected event.
   void onTransportDisconnect(WebSocketInterface? socket, ErrorCause cause) {
+    // We don't want remove transactions. We rely on retry.
     // Run _onTransportError_ callback on every client transaction using _transport_.
-    _transactions.removeAll().forEach((TransactionBase transaction) {
-      transaction.onTransportError();
-    });
+    // _transactions.removeAll().forEach((TransactionBase transaction) {
+    //   transaction.onTransportError();
+    // });
 
     emit(EventSocketDisconnected(socket: socket, cause: cause));
 

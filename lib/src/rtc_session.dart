@@ -1565,11 +1565,13 @@ class RTCSession extends EventManager implements Owner {
     _connection!.onIceConnectionState = (RTCIceConnectionState state) {
       // TODO(cloudwebrtc): Do more with different states.
       if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
-        terminate(<String, dynamic>{
-          'cause': DartSIP_C.CausesType.RTP_TIMEOUT,
-          'status_code': 408,
-          'reason_phrase': DartSIP_C.CausesType.RTP_TIMEOUT
-        });
+        _iceGatheringState = RTCIceGatheringState.RTCIceGatheringStateNew;
+        _iceRestart();
+        // terminate(<String, dynamic>{
+        //   'cause': DartSIP_C.CausesType.RTP_TIMEOUT,
+        //   'status_code': 408,
+        //   'reason_phrase': DartSIP_C.CausesType.RTP_TIMEOUT
+        // });
       } else if (state ==
           RTCIceConnectionState.RTCIceConnectionStateDisconnected) {
         _iceGatheringState = RTCIceGatheringState.RTCIceGatheringStateNew;

@@ -26,9 +26,7 @@ class AckClientTransaction extends TransactionBase {
 
   @override
   void send() {
-    if (!transport!.send(request)) {
-      onTransportError();
-    }
+    safeSend(0);
   }
 
   @override

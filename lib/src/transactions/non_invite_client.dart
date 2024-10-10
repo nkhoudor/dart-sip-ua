@@ -43,9 +43,7 @@ class NonInviteClientTransaction extends TransactionBase {
       timer_F();
     }, Timers.TIMER_F);
 
-    if (!transport!.send(request)) {
-      onTransportError();
-    }
+    safeSend(0);
   }
 
   @override
