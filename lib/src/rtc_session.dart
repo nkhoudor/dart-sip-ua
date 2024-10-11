@@ -1550,6 +1550,7 @@ class RTCSession extends EventManager implements Owner {
   }
 
   void _iceRestart() async {
+    logger.d('iceRestart()');
     Map<String, dynamic> offerConstraints = _rtcOfferConstraints ??
         <String, dynamic>{
           'mandatory': <String, dynamic>{},
@@ -1561,9 +1562,11 @@ class RTCSession extends EventManager implements Owner {
 
   Future<void> _createRTCConnection(Map<String, dynamic> pcConfig,
       Map<String, dynamic> rtcConstraints) async {
+    logger.d('_createRTCConnection()');
     _connection = await createPeerConnection(pcConfig, rtcConstraints);
     _connection!.onIceConnectionState = (RTCIceConnectionState state) {
       // TODO(cloudwebrtc): Do more with different states.
+      logger.d('ICE connection state changed: ${state.name}');
       if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
         _iceGatheringState = RTCIceGatheringState.RTCIceGatheringStateNew;
         _iceRestart();
@@ -1672,12 +1675,15 @@ class RTCSession extends EventManager implements Owner {
         logger.d('emit "sdp"');
         emit(EventSdp(originator: 'local', type: type, sdp: desc!.sdp));
         completer.complete(desc);
+        logger.d('ready() completer completed');
       }
     }
 
     _connection!.onIceGatheringState = (RTCIceGatheringState state) {
       _iceGatheringState = state;
+      logger.d('onIceGatheringState changed [state:${state.name}]');
       if (state == RTCIceGatheringState.RTCIceGatheringStateComplete) {
+        logger.d('onIceGatheringState changed [Completed]');
         ready();
       }
     };
@@ -1685,7 +1691,12 @@ class RTCSession extends EventManager implements Owner {
     bool hasCandidate = false;
     _connection!.onIceCandidate = (RTCIceCandidate candidate) {
       if (candidate != null) {
+        logger.d('onIceCandidate [candidate:${candidate.toMap()}]');
         emit(EventIceCandidate(candidate, ready));
+        if (candidate.candidate?.contains(' relay ') ?? false) {
+          logger.d('First candidate found [candidate:${candidate.toMap()}]. Wait for other candidates');
+          setTimeout(() => ready(), 3000);
+        }
         if (!hasCandidate) {
           hasCandidate = true;
           /**
@@ -1695,6 +1706,7 @@ class RTCSession extends EventManager implements Owner {
            * initiating a call to answer the call waiting will be unacceptable.
            */
           if (ua.configuration.ice_gathering_timeout != 0) {
+            logger.d('ice_gathering_timeout is ${ua.configuration.ice_gathering_timeout}');
             setTimeout(() => ready(), ua.configuration.ice_gathering_timeout);
           }
         }
