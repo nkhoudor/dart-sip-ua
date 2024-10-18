@@ -7,6 +7,7 @@ class Timers {
   static const int TIMER_B = 64 * T1;
   static const int TIMER_D = 0 * T1;
   static const int TIMER_F = 64 * T1;
+  static const int TIMER_E = 1 * T1;
   static const int TIMER_H = 64 * T1;
   static const int TIMER_I = 0 * T1;
   static const int TIMER_J = 0 * T1;

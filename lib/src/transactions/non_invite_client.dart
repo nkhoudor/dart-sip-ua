@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import '../event_manager/event_manager.dart';
 import '../event_manager/internal_events.dart';
@@ -29,7 +30,7 @@ class NonInviteClientTransaction extends TransactionBase {
   }
 
   late EventManager _eventHandlers;
-  Timer? F, K;
+  Timer? F, K, E;
 
   void stateChanged(TransactionState state) {
     this.state = state;
@@ -42,8 +43,8 @@ class NonInviteClientTransaction extends TransactionBase {
     F = setTimeout(() {
       timer_F();
     }, Timers.TIMER_F);
-
-    safeSend(0);
+    resetTimer_E();
+    transport!.send(request);
   }
 
   @override
@@ -58,12 +59,23 @@ class NonInviteClientTransaction extends TransactionBase {
 
   void timer_F() {
     logger.d('Timer F expired for transaction $id');
+    clearTimeout(E);
     stateChanged(TransactionState.TERMINATED);
     ua.destroyTransaction(this);
     _eventHandlers.emit(EventOnRequestTimeout());
   }
 
+  void resetTimer_E({int timer = Timers.TIMER_E}) {
+    clearTimeout(E);
+    E = setTimeout(() {
+      logger.d('Timer E expired. Retry transaction $id');
+      resetTimer_E(timer: min(timer * 2, timer + 2000));
+      transport!.send(request);
+    }, timer);
+  }
+
   void timer_K() {
+    clearTimeout(E);
     stateChanged(TransactionState.TERMINATED);
     ua.destroyTransaction(this);
   }
@@ -72,6 +84,7 @@ class NonInviteClientTransaction extends TransactionBase {
   void receiveResponse(int status_code, IncomingMessage response,
       [void Function()? onSuccess, void Function()? onFailure]) {
     if (status_code < 200) {
+      resetTimer_E();
       switch (state) {
         case TransactionState.TRYING:
         case TransactionState.PROCEEDING:
@@ -87,6 +100,7 @@ class NonInviteClientTransaction extends TransactionBase {
         case TransactionState.TRYING:
         case TransactionState.PROCEEDING:
           stateChanged(TransactionState.COMPLETED);
+          clearTimeout(E);
           clearTimeout(F);
 
           if (status_code == 408) {
